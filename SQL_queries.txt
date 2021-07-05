@@ -1,0 +1,126 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/* 
+This project is taking data from a source and transforming / performing analysis on it using MySQL, 
+The data should only have US states and their estimated population from the year 2010 - 2020
+*/ 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/*
+THIS SECTION IS STRICTLY FOR REVIEWING SOME DATA AND STRUCTURES TO SEE WHAT IS IN THE TABLES
+*/
+use censusproject;
+
+-- Check data in SQL to see how everything is structured / datatypes
+Show tables;
+show columns from census;
+
+-- Select data from table census to see a bit of the data we are working with
+Select * from census;
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/*
+THIS SECTION IS QUICK ANALYSIS AND MOSTLY TABLE MANIPULATION DUE TO MINOR ISSUES (DELETIONS, RENAME)
+*/
+
+/* Delete the top row from table (Purposely left out unneccessary row when restructuring data to show a query on how to delete a row in SQL,
+ there was an extra row in the table explaining what the data was)
+ 
+ I commented it out for now so there are no accidental deletions going forward
+ */
+-- Delete from census LIMIT 1;
+
+Select * from census;
+-- After a quick look at the data I see Puerto Rico is not supposed to be in this table since it is not a state, I will delete it from the table
+Delete from census 
+where State = 'Puerto Rico';
+
+-- Find count of state to ensure it is 50
+Select count(State) from census;
+
+-- Above query counted 51, after reviewing 'District of Columbia' was also in the data, I used a wildcard after district to delete any records beginning with district
+Delete from census 
+-- I wouldnt normally use a wildcard for 1 record, I just wanted to show how they work. Any record starting with 'district' and more words after in the column State will be deleted
+where State like 'district%';
+
+-- Rename column name from Geographic Area to State for easier readbility
+Alter table census rename column `Geographic Area` to State;
+
+-- Ensure previous commands worked successfully
+Select State from census;
+
+-- Remove period that was at the beginning of column state, Ex: .Alabama is now Alabama
+Update census
+set State=replace(State,'.','');
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/*
+THIS SECTION IS STRICTLY ADDING TABLES / VALUES
+*/
+-- Create new table of friends and the state they live in
+Create Table friends_state (
+name VARCHAR(50),
+State text
+);
+
+-- Inserting values into new table specifying which columns to add and their values
+Insert into friends_state (name, state)
+Values ('Gerard', 'New Jersey');
+
+-- Inserting values into the new table NOT specifying columns being that we are adding values for all columns
+Insert into friends_state
+Values ('Mike', 'North Carolina');
+
+Insert into friends_state
+Values ('Vinny', 'Texas');
+
+Insert into friends_state
+Values ('Ryan', 'New Mexico');
+
+-- Inserting value into table, leaving state as null
+Insert into friends_state (name)
+Values ('Steve');
+
+Select * from friends_state;
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/*
+THIS SECTION IS STRICTLY DATA ANALYSIS (COMPARISONS, JOINS)
+*/
+-- Display column 2010 from table census, had to use a tilde to specify it is the column name and not a literal value
+Select `2010` from census;
+
+-- Display * that has a higher estimated value in 2010 than 2011, data shows only Rhode Island has higher estimates
+Select * from census 
+where `2010` > `2011`;
+
+-- Display any record from table friends_state that has null for State
+Select * from friends_state
+Where state is null;
+
+-- Displays a join between the census and friends_state tables. This query is displaying the name, state by using the census table, and estimated population of 2020
+Select name, census.State, `2020` from friends_state 
+inner join census
+on census.State = friends_state.State
+where friends_state.State = census.State;
+
+-- Identify which records from friends_state have duplicates
+Select * from friends_state
+group by name 
+Having count(*) >1;
+
+-- Identify who has multiple records, and what the count is
+Select name, count(*) from friends_state
+group by name
+having count(*) >1;
+
+-- Select all columns from the duplicate records from both tables while showing the count from friends_state
+Select *, count(*) from friends_state
+left join census 
+on friends_state.state = census.State
+group by name
+having count(*) >1;
+
+
+-- Select unique rows (Doesnt show duplicate records)
+Select distinct * from friends_state;
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
